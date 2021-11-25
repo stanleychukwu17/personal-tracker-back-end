@@ -24,11 +24,17 @@ app.get('/get-the-goals/', async (req, res) => {
     res.json({'msg':'okay', rows})
 })
 
+// fetches the archived goals and calculates their stats
+app.get('/get-archieved-goals/', async (req, res) => {
+    res.json({'msg':'okay', 'cause':'timing!'})
+})
+
 // saves the goals archived for a particular day
 app.post('/save-this-archive/', async (req, res) => {
     const {theDay, theMonth, theYear, goals} = req.body;
     if (theDay < 10) { theDay = `0${theDay}`; }
     if (theMonth < 10) { theMonth = `0${theMonth}`; }
+    let saving = false;
 
     var typ_val = '', typ_hours = 0, hour_val, mins_val, table_id;
 
@@ -53,18 +59,26 @@ app.post('/save-this-archive/', async (req, res) => {
             ech.typ_hours = typ_hours = hour_val
         }
     
+        saving = true;
         let [rows] = await connection.execute(`SELECT id from goals_completed where date_w = '${date_fmt}' and typ_id = ${ech.id} limit 1`);
         if (rows[0]) {
             table_id = rows[0].id;
-            let [result] = await connection.execute(`UPDATE goals_completed SET typ='${ech.typ}', typ_val='${ech.typ_val}', typ_hours=${ech.typ_hours}
-                where id = ${table_id}`);
+            // let [result] = await connection.execute(`UPDATE goals_completed SET typ='${ech.typ}', typ_val='${ech.typ_val}', typ_hours=${ech.typ_hours} where id = ${table_id} limit 1`);
+            saving = false;
         } else {
-            let [result] = await connection.execute(`INSERT INTO goals_completed (date_w, typ_id, typ, typ_val, typ_hours) values
-                ('${date_fmt}', ${ech.id}, '${ech.typ}', '${ech.typ_val}', ${ech.typ_hours})`);
+            // let [result] = await connection.execute(`INSERT INTO goals_completed (date_w, typ_id, typ, typ_val, typ_hours) values ('${date_fmt}', ${ech.id}, '${ech.typ}', '${ech.typ_val}', ${ech.typ_hours})`);
+            saving = false;
             // let {insertId} = result; or let insertId = result.insertId
             // console.log(`INSERT INTO goals_completed (date_w, typ_id, typ, typ_val, typ_hours) values ('${date_fmt}', ${ech.id}, '${ech.typ}', '${ech.typ_val}', ${ech.typ_hours})`)
         }
     })
 
-    res.json({'msg':'okay', 'cause':'Moving higher!'})
+    let timer = setInterval(() => {
+        if (!saving) {
+            clearInterval(timer)
+            res.json({'msg':'okay', 'cause':'Moving higher!'})
+        }
+
+        console.log('checking', saving)
+    }, 1000)
 })
