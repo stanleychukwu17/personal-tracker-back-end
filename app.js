@@ -27,6 +27,9 @@ app.get('/get-the-goals/', async (req, res) => {
 // saves the goals archived for a particular day
 app.post('/save-this-archive/', async (req, res) => {
     // const connection = await mysql.createConnection(dbObject);
+    const {theDay, theMonth, theYear, goals} = req.body;
+    const date_fmt = `${theDay}-${theMonth}-${theYear}`
+
     console.log(req.body, 'save it now')
     res.json({'msg':'okay', 'cause':'Moving higher!'})
 })
