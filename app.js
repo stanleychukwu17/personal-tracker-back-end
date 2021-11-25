@@ -28,8 +28,14 @@ app.get('/get-the-goals/', async (req, res) => {
 app.post('/save-this-archive/', async (req, res) => {
     // const connection = await mysql.createConnection(dbObject);
     const {theDay, theMonth, theYear, goals} = req.body;
-    const date_fmt = `${theDay}-${theMonth}-${theYear}`
+    if (theDay < 10) { theDay = `0${theDay}`; }
+    if (theMonth < 10) { theMonth = `0${theMonth}`; }
 
-    console.log(req.body, 'save it now')
+    // format the date and get it ready for our mysql database
+    const date_fmt = `${theYear}-${theMonth}-${theDay}`
+
+    goals.forEach( async (ech) => {
+        console.log(ech, 'with me')
+    })
     res.json({'msg':'okay', 'cause':'Moving higher!'})
 })
