@@ -30,7 +30,7 @@ app.post('/save-this-archive/', async (req, res) => {
     if (theDay < 10) { theDay = `0${theDay}`; }
     if (theMonth < 10) { theMonth = `0${theMonth}`; }
 
-    let typ_val = '', typ_hours = 0, hour_val, mins_val;
+    var typ_val = '', typ_hours = 0, hour_val, mins_val, table_id;
 
     // format the date and get it ready for our mysql database
     const date_fmt = `${theYear}-${theMonth}-${theDay}`
@@ -53,9 +53,11 @@ app.post('/save-this-archive/', async (req, res) => {
             ech.typ_hours = typ_hours = hour_val
         }
     
-        let [rows] = await connection.execute(`SELECT * from goals_completed where date_w = '${date_fmt}' and typ_id = ${ech.id} limit 1`);
+        let [rows] = await connection.execute(`SELECT id from goals_completed where date_w = '${date_fmt}' and typ_id = ${ech.id} limit 1`);
         if (rows[0]) {
-            console.log(ech.id, rows, `SELECT * from goals_completed where date_w = '${date_fmt}' and typ_id = ${ech.id} limit 1`)
+            table_id = rows[0].id;
+            let [result] = await connection.execute(`UPDATE goals_completed SET typ='${ech.typ}', typ_val='${ech.typ_val}', typ_hours=${ech.typ_hours}
+                where id = ${table_id}`);
         } else {
             let [result] = await connection.execute(`INSERT INTO goals_completed (date_w, typ_id, typ, typ_val, typ_hours) values
                 ('${date_fmt}', ${ech.id}, '${ech.typ}', '${ech.typ_val}', ${ech.typ_hours})`);
