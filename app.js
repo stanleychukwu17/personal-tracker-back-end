@@ -59,16 +59,45 @@ const calculate_the_stats_for_this_date = async (obj) => {
 
 app.get('/', (req, res) => { console.log('first request to the home page'); res.json({'msg':'we good'}) })
 
-// fetches all the list of goals for each day
+// fetches all the list of goals to complete for today
 app.get('/get-the-goals/', async (req, res) => {
     const dbCon = await mysql.createConnection(dbObject);
     const [rows, fields] = await dbCon.execute(`SELECT * FROM tracks_list ORDER BY id asc`);
     res.json({'msg':'okay', rows})
 })
 
-// fetches the archived goals and calculates their stats
+// fetches the archived goals and the stats for each of those goals
 app.get('/get-archieved-goals/', async (req, res) => {
-    res.json({'msg':'okay', 'cause':'timing!'})
+    const dbCon = await mysql.createConnection(dbObject);
+    const {m:month, y:year} = req.query
+    const date_start = `${year}-${month}-01`
+    const date_end = `${year}-${month}-31`
+    const date_arr = []
+    let theDay = ''
+    const ret = {
+        'msg':'okay',
+        'every_day':[]
+    }
+
+    for (let i = 1; i <= 31; i++) { date_arr.push(`${year}-${month}-${i}`) }
+
+    // get the result for every day of the the
+    const promises = date_arr.map( async (dfmt, ind) => {
+        console.log(ind, Number(month) - 1)
+        theDay = new Date(year, Number(month) - 1, 24);
+
+        let [q1] = await dbCon.execute(`SELECT typ_id, typ, typ_val, typ_hours, (SELECT title from tracks_list where tracks_list.id = goals_completed.typ_id limit 1) as title
+            from goals_completed where date_w = '${dfmt}'`);
+
+        let [q2] = await dbCon.execute(`SELECT t1, t2, t3, t4, t5, t6 FROM goals_stat where date_w = '${dfmt}'`);
+
+        ret.every_day.push({'date':dfmt, 'goals':q1, 'stats':q2[0]})
+        return [q1, q2];
+    })
+
+    
+    // fetching has been completed
+    Promise.all(promises).then(re => { res.json(ret) })
 })
 
 // saves the goals archived for a particular day
