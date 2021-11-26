@@ -1,8 +1,8 @@
 require('dotenv').config(); // sets up your dotenv environment
 const express           = require('express');
+const cors              = require('cors');
 const mysql             = require('mysql2/promise');
 const dbObject = {host:'localhost', user: 'root', password: 'password', database: 'dev_mystats'};
-const cors              = require('cors');
 
 const app = express();
 app.listen(4000, () => { console.log('listening on port ', 4000) })
@@ -16,9 +16,9 @@ app.use(express.json());
 
 //--start--- some small helper functions
 const calculate_the_stats_for_this_date = async (obj) => {
+    const dbCon = await mysql.createConnection(dbObject);
     const {date_fmt, goals} = obj;
     const subs = {}
-    // const dbCon = await mysql.createConnection(dbObject);
 
     // seperates each of the goals in the object called subs
     goals.forEach(ech => { subs[ech.id] = ech; })
@@ -34,9 +34,21 @@ const calculate_the_stats_for_this_date = async (obj) => {
 
     let time_lost_to_breaks = subs['16'].typ_hours
     let time_lost_to_distraction = subs['17'].typ_hours
+    let overall_lost_hours = time_lost_b4_start_work + time_lost_to_breaks + time_lost_to_distraction
 
-    console.log(subs)
-    console.log({total_work_time})
+    let [rows] = await dbCon.execute(`SELECT id from goals_stat where date_w = '${date_fmt}' limit 1`);
+    if (rows[0]) {
+        table_id = rows[0].id;
+        let [result] = await dbCon.execute(`UPDATE goals_stat SET t1='${total_work_hours}', t2='${total_time_on_sit}', t3=${time_lost_b4_start_work},
+            t4='${time_lost_to_breaks}', t5='${time_lost_to_distraction}', t6=${overall_lost_hours}
+            where id = ${table_id} limit 1`);
+    } else {
+        let [result] = await dbCon.execute(`INSERT INTO goals_stat (date_w, t1, t2, t3, t4, t5, t6) values
+            ('${date_fmt}', ${total_work_hours}, ${total_time_on_sit}, ${time_lost_b4_start_work},
+            ${time_lost_to_breaks}, ${time_lost_to_distraction}, ${overall_lost_hours})`);
+    }
+
+    return {'msg':'okay'}
 }
 //--end--
 
@@ -57,6 +69,7 @@ app.get('/get-archieved-goals/', async (req, res) => {
 
 // saves the goals archived for a particular day
 app.post('/save-this-archive/', async (req, res) => {
+    const dbCon = await mysql.createConnection(dbObject);
     const {theDay, theMonth, theYear, goals} = req.body;
     if (theDay < 10) { theDay = `0${theDay}`; }
     if (theMonth < 10) { theMonth = `0${theMonth}`; }
@@ -65,7 +78,6 @@ app.post('/save-this-archive/', async (req, res) => {
 
     // format the date and get it ready for our mysql database
     const date_fmt = `${theYear}-${theMonth}-${theDay}`
-    const dbCon = await mysql.createConnection(dbObject);
 
     goals.forEach( async (ech) => {
         ech.typ_hours = 0; ech.typ_val = typ_val = '';
