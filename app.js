@@ -4,6 +4,10 @@ const cors              = require('cors');
 const mysql             = require('mysql2/promise');
 const dbObject = {host:'localhost', user: 'root', password: 'password', database: 'dev_mystats'};
 
+const dayArr = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+// const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const monthNames = ["Jan", "Feb", "March", "April", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 const app = express();
 app.listen(4000, () => { console.log('listening on port ', 4000) })
 
@@ -69,29 +73,33 @@ app.get('/get-the-goals/', async (req, res) => {
 // fetches the archived goals and the stats for each of those goals
 app.get('/get-archieved-goals/', async (req, res) => {
     const dbCon = await mysql.createConnection(dbObject);
-    const {m:month, y:year} = req.query
+    let {m:month, y:year} = req.query; month = Number(month);
     const date_start = `${year}-${month}-01`
     const date_end = `${year}-${month}-31`
     const date_arr = []
-    let theDay = ''
+    let theDay, day;
     const ret = {
         'msg':'okay',
         'every_day':[]
     }
 
-    for (let i = 1; i <= 31; i++) { date_arr.push(`${year}-${month}-${i}`) }
+    for (let i = 1; i <= 31; i++) { date_arr.push({'dfmt':`${year}-${month}-${i}`, 'day':i}) }
 
     // get the result for every day of the the
-    const promises = date_arr.map( async (dfmt, ind) => {
-        console.log(ind, Number(month) - 1)
-        theDay = new Date(year, Number(month) - 1, 24);
+    const promises = date_arr.map( async ({dfmt, day}) => {
+        // theDay = new Date(year, Number(month) - 1, (ind+1));
 
         let [q1] = await dbCon.execute(`SELECT typ_id, typ, typ_val, typ_hours, (SELECT title from tracks_list where tracks_list.id = goals_completed.typ_id limit 1) as title
             from goals_completed where date_w = '${dfmt}'`);
 
         let [q2] = await dbCon.execute(`SELECT t1, t2, t3, t4, t5, t6 FROM goals_stat where date_w = '${dfmt}'`);
 
-        ret.every_day.push({'date':dfmt, 'goals':q1, 'stats':q2[0]})
+        ret.every_day.push({
+            'date':dfmt,
+            'day':dayArr[(new Date(year, month - 1, day)).getDay()],
+            'd_shw':`${monthNames[(new Date(year, month - 1, day)).getMonth()]} ${day}, ${(new Date(year, month-1)).getFullYear()}`,
+            'goals':q1, 'stats':q2[0]
+        })
         return [q1, q2];
     })
 
