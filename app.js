@@ -28,6 +28,10 @@ const calculate_the_stats_for_this_date = async (obj) => {
 
     // worked more than 15hours, calculates the total work time for the day (time ended work - time started - break_time - distraction_time)
     let total_time_on_sit = subs['15'].typ_hours - subs['14'].typ_hours - subs['16'].typ_hours - subs['17'].typ_hours
+    if (total_time_on_sit < 15) {
+        subs['2'].typ_val = 'failed'
+        dbCon.execute(`UPDATE goals_stat SET typ_val = 'failed',  where typ_id = 2 limit 1`);
+    }
 
     // difference btw wake time and start time (i.e time lost before worked kicked off)
     let time_lost_b4_start_work = subs['14'].typ_hours - subs['13'].typ_hours
