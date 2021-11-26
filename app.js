@@ -17,20 +17,26 @@ app.use(express.json());
 //--start--- some small helper functions
 const calculate_the_stats_for_this_date = async (obj) => {
     const {date_fmt, goals} = obj;
-    const seperate = {}
-    const dbCon = await mysql.createConnection(dbObject);
+    const subs = {}
+    // const dbCon = await mysql.createConnection(dbObject);
 
-    // worked more than 15hours
-    // let [q1] = await dbCon.execute(`SELECT * FROM tracks_list ORDER BY id asc`);
+    // seperates each of the goals in the object called subs
+    goals.forEach(ech => { subs[ech.id] = ech; })
+
+    // total time in work (time work ended - time work started)
+    let total_work_hours = subs['15'].typ_hours - subs['14'].typ_hours
+
+    // worked more than 15hours, calculates the total work time for the day (time ended work - time started - break_time - distraction_time)
+    let total_time_on_sit = subs['15'].typ_hours - subs['14'].typ_hours - subs['16'].typ_hours - subs['17'].typ_hours
 
     // difference btw wake time and start time (i.e time lost before worked kicked off)
-    // total time in work
-    // total time on sit
-    // time lost to distraction
-    // time lost breaks
-    console.log(date_fmt, goals);
+    let time_lost_b4_start_work = subs['14'].typ_hours - subs['13'].typ_hours
 
+    let time_lost_to_breaks = subs['16'].typ_hours
+    let time_lost_to_distraction = subs['17'].typ_hours
 
+    console.log(subs)
+    console.log({total_work_time})
 }
 //--end--
 
