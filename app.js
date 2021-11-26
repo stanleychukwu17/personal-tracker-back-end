@@ -14,13 +14,33 @@ app.use(express.static('/public'));
 app.use(express.urlencoded({extended: false}));
 app.use(express.json());
 
+//--start--- some small helper functions
+const calculate_the_stats_for_this_date = async (obj) => {
+    const {date_fmt, goals} = obj;
+    const seperate = {}
+    const dbCon = await mysql.createConnection(dbObject);
+
+    // worked more than 15hours
+    // let [q1] = await dbCon.execute(`SELECT * FROM tracks_list ORDER BY id asc`);
+
+    // difference btw wake time and start time (i.e time lost before worked kicked off)
+    // total time in work
+    // total time on sit
+    // time lost to distraction
+    // time lost breaks
+    console.log(date_fmt, goals);
+
+
+}
+//--end--
+
 
 app.get('/', (req, res) => { console.log('first request to the home page'); res.json({'msg':'we good'}) })
 
 // fetches all the list of goals for each day
 app.get('/get-the-goals/', async (req, res) => {
-    const connection = await mysql.createConnection(dbObject);
-    const [rows, fields] = await connection.execute(`SELECT * FROM tracks_list ORDER BY id asc`);
+    const dbCon = await mysql.createConnection(dbObject);
+    const [rows, fields] = await dbCon.execute(`SELECT * FROM tracks_list ORDER BY id asc`);
     res.json({'msg':'okay', rows})
 })
 
@@ -39,7 +59,7 @@ app.post('/save-this-archive/', async (req, res) => {
 
     // format the date and get it ready for our mysql database
     const date_fmt = `${theYear}-${theMonth}-${theDay}`
-    const connection = await mysql.createConnection(dbObject);
+    const dbCon = await mysql.createConnection(dbObject);
 
     goals.forEach( async (ech) => {
         ech.typ_hours = 0; ech.typ_val = typ_val = '';
@@ -58,16 +78,17 @@ app.post('/save-this-archive/', async (req, res) => {
             ech.typ_hours = typ_hours = hour_val
         }
     
-        let [rows] = await connection.execute(`SELECT id from goals_completed where date_w = '${date_fmt}' and typ_id = ${ech.id} limit 1`);
+        let [rows] = await dbCon.execute(`SELECT id from goals_completed where date_w = '${date_fmt}' and typ_id = ${ech.id} limit 1`);
         if (rows[0]) {
             table_id = rows[0].id;
-            let [result] = await connection.execute(`UPDATE goals_completed SET typ='${ech.typ}', typ_val='${ech.typ_val}', typ_hours=${ech.typ_hours} where id = ${table_id} limit 1`);
+            let [result] = await dbCon.execute(`UPDATE goals_completed SET typ='${ech.typ}', typ_val='${ech.typ_val}', typ_hours=${ech.typ_hours} where id = ${table_id} limit 1`);
         } else {
-            let [result] = await connection.execute(`INSERT INTO goals_completed (date_w, typ_id, typ, typ_val, typ_hours) values ('${date_fmt}', ${ech.id}, '${ech.typ}', '${ech.typ_val}', ${ech.typ_hours})`);
+            let [result] = await dbCon.execute(`INSERT INTO goals_completed (date_w, typ_id, typ, typ_val, typ_hours) values ('${date_fmt}', ${ech.id}, '${ech.typ}', '${ech.typ_val}', ${ech.typ_hours})`);
             // let {insertId} = result; or let insertId = result.insertId
             // console.log(`INSERT INTO goals_completed (date_w, typ_id, typ, typ_val, typ_hours) values ('${date_fmt}', ${ech.id}, '${ech.typ}', '${ech.typ_val}', ${ech.typ_hours})`)
         }
     })
 
+    calculate_the_stats_for_this_date({date_fmt, goals})
     res.json({'msg':'okay', 'cause':'Moving higher!'})
 })
