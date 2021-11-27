@@ -83,7 +83,7 @@ app.get('/get-archieved-goals/', async (req, res) => {
         'every_day':[]
     }
 
-    for (let i = 1; i <= 31; i++) { date_arr.push({'dfmt':`${year}-${month}-${i}`, 'day':i}) }
+    for (let i = 31; i >= 1; i--) { date_arr.push({'dfmt':`${year}-${month}-${i}`, 'day':i}) }
 
     // get the result for every day of the the
     const promises = date_arr.map( async ({dfmt, day}) => {
