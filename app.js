@@ -69,14 +69,12 @@ const get_overall_stats_for_this_month = async (obj) => {
 
     const promises = rows.map(async (row) => {
         if (row.typ == 'select_yes') {
-            // get the total for that month
+            // get the total for that month, get the total passed, get the total failed
             let [q1] = await dbCon.execute(`SELECT count(*) as tdone from goals_completed where date_w >= '${date_start}' and date_w <= '${date_end}' and typ_id = ${row.id}`);
-
             let [q2] = await dbCon.execute(`SELECT count(*) as tdone from goals_completed where date_w >= '${date_start}' and date_w <= '${date_end}' and typ_id = ${row.id} and typ_val = 'passed'`);
+            let [q3] = await dbCon.execute(`SELECT count(*) as tdone from goals_completed where date_w >= '${date_start}' and date_w <= '${date_end}' and typ_id = ${row.id} and typ_val = 'failed'`);
 
-            console.log(q2);
-            // get the total passed
-            // get the total failed
+            console.log(q3);
             // calcultate the scores
             // calculate the overall scores
         } else if (row.typ == 'select_time') {
