@@ -59,10 +59,11 @@ const calculate_the_stats_for_this_date = async (obj) => {
     return {'msg':'okay'}
 }
 
-const get_the_overall_stats_for_this_month = async (obj) => {
+const get_overall_stats_for_this_month = async (obj) => {
     const {year, month} = obj;
     const date_start = `${year}-${month}-01`
     const date_end = `${year}-${month}-31`
+    console.log('getting', date_start, date_end)
 }
 //--end--
 
@@ -104,6 +105,7 @@ app.get('/get-archieved-goals/', async (req, res) => {
         return [q1, q2];
     })
 
+    const cur_month = get_overall_stats_for_this_month({month, year})
     // fetching has been completed
     Promise.all(promises).then(re => { res.json(ret) })
 })
