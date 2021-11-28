@@ -60,10 +60,32 @@ const calculate_the_stats_for_this_date = async (obj) => {
 }
 
 const get_overall_stats_for_this_month = async (obj) => {
+    const dbCon = await mysql.createConnection(dbObject);
     const {year, month} = obj;
     const date_start = `${year}-${month}-01`
     const date_end = `${year}-${month}-31`
-    console.log('getting', date_start, date_end)
+
+    const [rows] = await dbCon.execute(`SELECT * FROM tracks_list ORDER BY id asc`);
+
+    const promises = rows.map(async (row) => {
+        if (row.typ == 'select_yes') {
+            // get the total for that month
+            let [q1] = await dbCon.execute(`SELECT count(*) as tdone from goals_completed where date_w >= '${date_start}' and date_w <= '${date_end}' and typ_id = ${row.id}`);
+
+            let [q2] = await dbCon.execute(`SELECT count(*) as tdone from goals_completed where date_w >= '${date_start}' and date_w <= '${date_end}' and typ_id = ${row.id} and typ_val = 'passed'`);
+
+            console.log(q2);
+            // get the total passed
+            // get the total failed
+            // calcultate the scores
+            // calculate the overall scores
+        } else if (row.typ == 'select_time') {
+
+        } else if (row.typ == 'input_hours') {
+
+        }
+        // console.log(row)
+    })
 }
 //--end--
 
