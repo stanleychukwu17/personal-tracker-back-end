@@ -64,26 +64,32 @@ const get_overall_stats_for_this_month = async (obj) => {
     const {year, month} = obj;
     const date_start = `${year}-${month}-01`
     const date_end = `${year}-${month}-31`
+    const ret = []
 
     const [rows] = await dbCon.execute(`SELECT * FROM tracks_list ORDER BY id asc`);
-
-    const promises = rows.map(async (row) => {
+    const sumUp = rows.map(async (row) => {
         if (row.typ == 'select_yes') {
             // get the total for that month, get the total passed, get the total failed, calcultate the scores
             let [q1] = await dbCon.execute(`SELECT count(*) as total from goals_completed where date_w >= '${date_start}' and date_w <= '${date_end}' and typ_id = ${row.id}`);
             let [q2] = await dbCon.execute(`SELECT count(*) as passed from goals_completed where date_w >= '${date_start}' and date_w <= '${date_end}' and typ_id = ${row.id} and typ_val = 'passed'`);
             let [q3] = await dbCon.execute(`SELECT count(*) as failed from goals_completed where date_w >= '${date_start}' and date_w <= '${date_end}' and typ_id = ${row.id} and typ_val = 'failed'`);
 
-            const scores = ((q2[0].passed/q1[0].total) * 100).toFixed(0)
-            console.log(scores);
             // calculate the overall scores
+            const scores = ((q2[0].passed/q1[0].total) * 100).toFixed(0)
+
+            const james = {'title':row.title, 'total':q1[0].total, 'passed':q2[0].passed, 'failed':q3[0].failed, scores};
+            ret.push(james)
+            return james
         } else if (row.typ == 'select_time') {
-
+            let [q1] = await dbCon.execute(`SELECT count(*) as total from goals_completed where date_w >= '${date_start}' and date_w <= '${date_end}' and typ_id = ${row.id}`);
+            return [];
         } else if (row.typ == 'input_hours') {
-
+            let [q1] = await dbCon.execute(`SELECT count(*) as total from goals_completed where date_w >= '${date_start}' and date_w <= '${date_end}' and typ_id = ${row.id}`);
+            return [];
         }
-        // console.log(row)
     })
+
+    return Promise.all(sumUp).then(re => { return ret })
 }
 //--end--
 
@@ -109,11 +115,11 @@ app.get('/get-archieved-goals/', async (req, res) => {
 
     // get the result for every day of the the
     const promises = date_arr.map( async ({dfmt, day}) => {
-        // theDay = new Date(year, Number(month) - 1, (ind+1));
-
+        // get the goals completed
         let [q1] = await dbCon.execute(`SELECT typ_id, typ, typ_val, typ_hours, (SELECT title from tracks_list where tracks_list.id = goals_completed.typ_id limit 1) as title
             from goals_completed where date_w = '${dfmt}'`);
 
+        // get the stats
         let [q2] = await dbCon.execute(`SELECT t1, t2, t3, t4, t5, t6 FROM goals_stat where date_w = '${dfmt}'`);
 
         ret.every_day.push({
@@ -125,9 +131,12 @@ app.get('/get-archieved-goals/', async (req, res) => {
         return [q1, q2];
     })
 
-    const cur_month = get_overall_stats_for_this_month({month, year})
+    const c1 = await get_overall_stats_for_this_month({month, year})
+
     // fetching has been completed
-    Promise.all(promises).then(re => { res.json(ret) })
+    Promise.all([promises, c1]).then(re => {
+        res.json({...ret, c1})
+    })
 })
 
 // saves the goals archived for a particular day
