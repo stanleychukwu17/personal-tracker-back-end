@@ -58,6 +58,12 @@ const calculate_the_stats_for_this_date = async (obj) => {
 
     return {'msg':'okay'}
 }
+
+const get_the_overall_stats_for_this_month = async (obj) => {
+    const {year, month} = obj;
+    const date_start = `${year}-${month}-01`
+    const date_end = `${year}-${month}-31`
+}
 //--end--
 
 
@@ -74,14 +80,9 @@ app.get('/get-the-goals/', async (req, res) => {
 app.get('/get-archieved-goals/', async (req, res) => {
     const dbCon = await mysql.createConnection(dbObject);
     let {m:month, y:year} = req.query; month = Number(month);
-    const date_start = `${year}-${month}-01`
-    const date_end = `${year}-${month}-31`
     const date_arr = []
     let theDay, day;
-    const ret = {
-        'msg':'okay',
-        'every_day':[]
-    }
+    const ret = {'msg':'okay', 'every_day':[]}
 
     for (let i = 31; i >= 1; i--) { date_arr.push({'dfmt':`${year}-${month}-${i}`, 'day':i}) }
 
@@ -103,7 +104,6 @@ app.get('/get-archieved-goals/', async (req, res) => {
         return [q1, q2];
     })
 
-    
     // fetching has been completed
     Promise.all(promises).then(re => { res.json(ret) })
 })
