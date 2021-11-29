@@ -64,7 +64,7 @@ const get_overall_stats_for_this_month = async (obj) => {
     const {year, month} = obj;
     const date_start = `${year}-${month}-01`
     const date_end = `${year}-${month}-31`
-    const ret = {'a':[]}
+    const ret = {'a':[], 'b':[]}
 
     const [rows] = await dbCon.execute(`SELECT * FROM tracks_list ORDER BY id asc`);
     const sumUp = rows.map(async (row) => {
@@ -80,16 +80,18 @@ const get_overall_stats_for_this_month = async (obj) => {
             const james = {'title':row.title, 'total':q1[0].total, 'passed':q2[0].passed, 'failed':q3[0].failed, scores};
             ret.a.push(james)
             return james
-        } else if (row.typ == 'select_time') {
-            let [q1] = await dbCon.execute(`SELECT SUM(typ_hours) as total from goals_completed where date_w >= '${date_start}' and date_w <= '${date_end}' and typ_id = ${row.id}`);
-            console.log('sume of', q1)
-            const james = {'title':`Sum of ${row.title}`, 'total':q1[0].total};
-            return [];
-        } else if (row.typ == 'input_hours') {
-            let [q1] = await dbCon.execute(`SELECT count(*) as total from goals_completed where date_w >= '${date_start}' and date_w <= '${date_end}' and typ_id = ${row.id}`);
-            return [];
+        } else if (row.typ == 'select_time' || row.typ == 'input_hours') {
+            let [q1] = await dbCon.execute(`SELECT AVG(typ_hours) as abg from goals_completed where date_w >= '${date_start}' and date_w <= '${date_end}' and typ_id = ${row.id}`);
+            const james = {'title':`Sum of ${row.title}`, 'avg':q1[0].abg};
+            ret.b.push(james)
+            return james
         }
     })
+
+    let [jez] = await dbCon.execute(`SELECT AVG(t1) as t1, AVG(t2) as t2, AVG(t3) as t3, AVG(t4) as t4, AVG(t5) as t5, AVG(t6) as t6 from goals_stat where date_w >= '${date_start}' and date_w <= '${date_end}'`);
+    console.log(jez)
+    // const james = {'title':`Sum of ${row.title}`, 'avg':q1[0].abg};
+    // ret.b.push(james)
 
     return Promise.all(sumUp).then(re => { return ret })
 }
