@@ -74,14 +74,16 @@ const get_overall_stats_for_this_month = async (obj) => {
             let [q2] = await dbCon.execute(`SELECT count(*) as passed from goals_completed where date_w >= '${date_start}' and date_w <= '${date_end}' and typ_id = ${row.id} and typ_val = 'passed'`);
             let [q3] = await dbCon.execute(`SELECT count(*) as failed from goals_completed where date_w >= '${date_start}' and date_w <= '${date_end}' and typ_id = ${row.id} and typ_val = 'failed'`);
 
-            // calculate the overall scores
+            // calculate the scores - get the percentage scores
             const scores = ((q2[0].passed/q1[0].total) * 100).toFixed(0)
 
             const james = {'title':row.title, 'total':q1[0].total, 'passed':q2[0].passed, 'failed':q3[0].failed, scores};
             ret.a.push(james)
             return james
         } else if (row.typ == 'select_time') {
-            let [q1] = await dbCon.execute(`SELECT count(*) as total from goals_completed where date_w >= '${date_start}' and date_w <= '${date_end}' and typ_id = ${row.id}`);
+            let [q1] = await dbCon.execute(`SELECT SUM(typ_hours) as total from goals_completed where date_w >= '${date_start}' and date_w <= '${date_end}' and typ_id = ${row.id}`);
+            console.log('sume of', q1)
+            const james = {'title':`Sum of ${row.title}`, 'total':q1[0].total};
             return [];
         } else if (row.typ == 'input_hours') {
             let [q1] = await dbCon.execute(`SELECT count(*) as total from goals_completed where date_w >= '${date_start}' and date_w <= '${date_end}' and typ_id = ${row.id}`);
