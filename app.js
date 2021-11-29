@@ -64,7 +64,7 @@ const get_overall_stats_for_this_month = async (obj) => {
     const {year, month} = obj;
     const date_start = `${year}-${month}-01`
     const date_end = `${year}-${month}-31`
-    const ret = []
+    const ret = {'a':[]}
 
     const [rows] = await dbCon.execute(`SELECT * FROM tracks_list ORDER BY id asc`);
     const sumUp = rows.map(async (row) => {
@@ -78,7 +78,7 @@ const get_overall_stats_for_this_month = async (obj) => {
             const scores = ((q2[0].passed/q1[0].total) * 100).toFixed(0)
 
             const james = {'title':row.title, 'total':q1[0].total, 'passed':q2[0].passed, 'failed':q3[0].failed, scores};
-            ret.push(james)
+            ret.a.push(james)
             return james
         } else if (row.typ == 'select_time') {
             let [q1] = await dbCon.execute(`SELECT count(*) as total from goals_completed where date_w >= '${date_start}' and date_w <= '${date_end}' and typ_id = ${row.id}`);
@@ -131,11 +131,11 @@ app.get('/get-archieved-goals/', async (req, res) => {
         return [q1, q2];
     })
 
-    const c1 = await get_overall_stats_for_this_month({month, year})
+    const mth = await get_overall_stats_for_this_month({month, year})
 
     // fetching has been completed
-    Promise.all([promises, c1]).then(re => {
-        res.json({...ret, c1})
+    Promise.all([promises, mth]).then(re => {
+        res.json({...ret, mth})
     })
 })
 
