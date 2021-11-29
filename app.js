@@ -82,16 +82,17 @@ const get_overall_stats_for_this_month = async (obj) => {
             return james
         } else if (row.typ == 'select_time' || row.typ == 'input_hours') {
             let [q1] = await dbCon.execute(`SELECT AVG(typ_hours) as abg from goals_completed where date_w >= '${date_start}' and date_w <= '${date_end}' and typ_id = ${row.id}`);
-            const james = {'title':`Sum of ${row.title}`, 'avg':q1[0].abg};
+            const james = {'title':`Average ${row.title}`, 'avg':q1[0].abg.toFixed(0)};
             ret.b.push(james)
             return james
         }
     })
 
     let [jez] = await dbCon.execute(`SELECT AVG(t1) as t1, AVG(t2) as t2, AVG(t3) as t3, AVG(t4) as t4, AVG(t5) as t5, AVG(t6) as t6 from goals_stat where date_w >= '${date_start}' and date_w <= '${date_end}'`);
-    console.log(jez)
-    // const james = {'title':`Sum of ${row.title}`, 'avg':q1[0].abg};
-    // ret.b.push(james)
+    const {t1:Avg_total_work_hours, t2: Avg_total_time_on_sit, t3: Avg_time_lost_b4_start_work, t4: Avg_time_lost_to_breaks, t5: Avg_time_lost_to_distraction, t6:Avg_overall_lost_hours} = jez[0]
+    ret.b.push({'title':`Average ${jez[0].t1}`, 'avg':jez[0].t1.toFixed(0)});       ret.b.push({'title':`Average ${jez[0].t2}`, 'avg':jez[0].t2.toFixed(0)});       ret.b.push({'title':`Average ${jez[0].t3}`, 'avg':jez[0].t3.toFixed(0)})
+    ret.b.push({'title':`Average ${jez[0].t4}`, 'avg':jez[0].t4.toFixed(0)});       ret.b.push({'title':`Average ${jez[0].t5}`, 'avg':jez[0].t5.toFixed(0)});       ret.b.push({'title':`Average ${jez[0].t6}`, 'avg':jez[0].t6.toFixed(0)})
+    console.log(ret.b)
 
     return Promise.all(sumUp).then(re => { return ret })
 }
