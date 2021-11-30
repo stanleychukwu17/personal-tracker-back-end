@@ -64,7 +64,7 @@ const get_overall_stats_for_this_month = async (obj) => {
     const {year, month} = obj;
     const date_start = `${year}-${month}-01`
     const date_end = `${year}-${month}-31`
-    const ret = {'month_name':`${monthNames[month - 1]}, ${year}`, 'num_return':0, 'a':[], 'b':[], 'c':[]}
+    const ret = {'month_name':`${monthNames[month - 1]}, ${year}`, 'num_return':0, 'a':[], 'b':[], 'c':[], 'scores_arr':[]}
 
     const [rows] = await dbCon.execute(`SELECT * FROM tracks_list ORDER BY id asc`);
     const sumUp = rows.map(async (row) => {
@@ -80,6 +80,7 @@ const get_overall_stats_for_this_month = async (obj) => {
 
             const james = {'title':row.title, 'total':q1[0].total, 'passed':q2[0].passed, 'failed':q3[0].failed, scores};
             ret.a.push(james)
+            ret.scores_arr.push(scores)
             return james
         } else if (row.typ == 'select_time' || row.typ == 'input_hours') {
             // first select the average
