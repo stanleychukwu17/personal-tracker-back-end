@@ -64,7 +64,7 @@ const get_overall_stats_for_this_month = async (obj) => {
     const {year, month} = obj;
     const date_start = `${year}-${month}-01`
     const date_end = `${year}-${month}-31`
-    const ret = {'a':[], 'b':[], 'c':[]}
+    const ret = {'month_name':`${monthNames[month - 1]}, ${year}`, 'num_return':0, 'a':[], 'b':[], 'c':[]}
 
     const [rows] = await dbCon.execute(`SELECT * FROM tracks_list ORDER BY id asc`);
     const sumUp = rows.map(async (row) => {
@@ -76,6 +76,7 @@ const get_overall_stats_for_this_month = async (obj) => {
 
             // calculate the scores - get the percentage scores
             const scores = ((q2[0].passed/q1[0].total) * 100).toFixed(0)
+            ret.num_return = q1[0].total;
 
             const james = {'title':row.title, 'total':q1[0].total, 'passed':q2[0].passed, 'failed':q3[0].failed, scores};
             ret.a.push(james)
@@ -119,8 +120,7 @@ app.get('/get-the-goals/', async (req, res) => {
 app.get('/get-archieved-goals/', async (req, res) => {
     const dbCon = await mysql.createConnection(dbObject);
     let {m:month, y:year, getLastSix} = req.query; month = Number(month);
-    let date_arr = [], diff_month_stats = [];
-    let theDay, day;
+    let date_arr = [], prom2 = [], diff_month_stats = [], mkay = {};
     const ret = {'msg':'okay', 'every_day':[]}
 
     for (let i = 31; i >= 1; i--) { date_arr.push({'dfmt':`${year}-${month}-${i}`, 'day':i}) }
@@ -143,24 +143,25 @@ app.get('/get-archieved-goals/', async (req, res) => {
         return [q1, q2];
     })
 
-
-    // get the last 6 months
+    // get the last 6 months and then get their stats
     let getMonths = [], totMonths = 6, tempMonth = Number(month), tempYear = Number(year)
     for (var i = totMonths; i > 0; i--) {
         getMonths.push({'month':tempMonth, 'year':tempYear})
         tempMonth--
         if (tempMonth <= 0) { tempYear--; tempMonth = 12; }
     }
-
-    diff_month_stats = getMonths.map(async (h) => {
+    prom2 = getMonths.map(async (h) => {
         const sabiBoy = await get_overall_stats_for_this_month({'month':h.month, 'year':h.year})
+        if (sabiBoy.num_return > 0) {
+            mkay[h.year+''+h.month] = sabiBoy;
+        }
         return sabiBoy
     })
-    const mth = await get_overall_stats_for_this_month({month, year})
 
     // fetching has been completed
-    Promise.all([promises, mth, diff_month_stats]).then(re => {
-        res.json({...ret, mth, diff_month_stats})
+    Promise.all([promises, ...prom2]).then(re => {
+        Object.keys(mkay).sort().reverse().map(each_key => {diff_month_stats.push(mkay[each_key]) })
+        res.json({...ret, diff_month_stats})
     })
 })
 
