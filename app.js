@@ -119,7 +119,7 @@ app.get('/get-the-goals/', async (req, res) => {
 app.get('/get-archieved-goals/', async (req, res) => {
     const dbCon = await mysql.createConnection(dbObject);
     let {m:month, y:year, getLastSix} = req.query; month = Number(month);
-    let date_arr = [];
+    let date_arr = [], diff_month_stats = [];
     let theDay, day;
     const ret = {'msg':'okay', 'every_day':[]}
 
@@ -145,20 +145,22 @@ app.get('/get-archieved-goals/', async (req, res) => {
 
 
     // get the last 6 months
-    let getMonths = [], totMonths = 6, tempMonth = month, tempYear = year
-    for (var i = tempMonth; i > 0; i--) {
+    let getMonths = [], totMonths = 6, tempMonth = Number(month), tempYear = Number(year)
+    for (var i = totMonths; i > 0; i--) {
         getMonths.push({'month':tempMonth, 'year':tempYear})
         tempMonth--
-        totMonths--
-        if (tempMonth <= 0) { tempYear--; tempMonth = 12; i = 12; }
-        if (totMonths <= 0) { break }
+        if (tempMonth <= 0) { tempYear--; tempMonth = 12; }
     }
-    console.log(getMonths)
+
+    diff_month_stats = getMonths.map(async (h) => {
+        const sabiBoy = await get_overall_stats_for_this_month({'month':h.month, 'year':h.year})
+        return sabiBoy
+    })
     const mth = await get_overall_stats_for_this_month({month, year})
 
     // fetching has been completed
-    Promise.all([promises, mth]).then(re => {
-        res.json({...ret, mth})
+    Promise.all([promises, mth, diff_month_stats]).then(re => {
+        res.json({...ret, mth, diff_month_stats})
     })
 })
 
