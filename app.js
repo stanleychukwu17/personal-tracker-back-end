@@ -83,7 +83,7 @@ const get_overall_stats_for_this_month = async (obj) => {
         } else if (row.typ == 'select_time' || row.typ == 'input_hours') {
             // first select the average
             let [q1] = await dbCon.execute(`SELECT ROUND(AVG(typ_hours), 2) as ag from goals_completed where date_w >= '${date_start}' and date_w <= '${date_end}' and typ_id = ${row.id}`);
-            const james = {'title':`Average ${row.title}`, 'avg':q1[0].ag}
+            const james = {'title':`Average ${row.title}`, 'typ':row.typ, 'avg':q1[0].ag}
             ret.b.push(james)
             return james
         }
@@ -92,7 +92,7 @@ const get_overall_stats_for_this_month = async (obj) => {
     // get the average for more stats
     let [jz] = await dbCon.execute(`SELECT ROUND(AVG(t1), 2) as t1, ROUND(AVG(t2), 2) as t2, ROUND(AVG(t3), 2) as t3, ROUND(AVG(t4), 2) as t4, ROUND(AVG(t5), 2) as t5, ROUND(AVG(t6), 2) as t6
         from goals_stat where date_w >= '${date_start}' and date_w <= '${date_end}'`);
-    ret.b.push({'title':`Avg work hours`, 'avg':jz[0].t1});       ret.b.push({'title':`Avg time on sit`, 'avg':jz[0].t2});       ret.b.push({'title':`Avg time lost b4 start work`, 'avg':jz[0].t3})
+    ret.b.push({'title':`Avg work hours`, 'avg':jz[0].t1});                ret.b.push({'title':`Avg time on sit`, 'avg':jz[0].t2});                    ret.b.push({'title':`Avg time lost b4 start work`, 'avg':jz[0].t3})
     ret.b.push({'title':`Avg time lost to breaks`, 'avg':jz[0].t4});       ret.b.push({'title':`Avg time lost to distraction`, 'avg':jz[0].t5});       ret.b.push({'title':`Avg overall lost hours`, 'avg':jz[0].t6})
 
     // second, we select the sum of the hours
