@@ -118,7 +118,7 @@ app.get('/get-the-goals/', async (req, res) => {
 // fetches the archived goals and the stats for each of those goals
 app.get('/get-archieved-goals/', async (req, res) => {
     const dbCon = await mysql.createConnection(dbObject);
-    let {m:month, y:year} = req.query; month = Number(month);
+    let {m:month, y:year, getLastSix} = req.query; month = Number(month);
     const date_arr = []
     let theDay, day;
     const ret = {'msg':'okay', 'every_day':[]}
@@ -143,7 +143,8 @@ app.get('/get-archieved-goals/', async (req, res) => {
         return [q1, q2];
     })
 
-    const mth = await get_overall_stats_for_this_month({month, year})
+    console.log(getLastSix)
+    if (getLastSix == 'yes') { const mth = await get_overall_stats_for_this_month({month, year}) } else { const mth = {} }
 
     // fetching has been completed
     Promise.all([promises, mth]).then(re => {
