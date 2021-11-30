@@ -147,8 +147,13 @@ app.get('/get-archieved-goals/', async (req, res) => {
     // get the last 6 months
     let getMonths = [], totMonths = 6, tempMonth = month, tempYear = year
     for (var i = tempMonth; i > 0; i--) {
-        console.log('the month is ', i)
+        getMonths.push({'month':tempMonth, 'year':tempYear})
+        tempMonth--
+        totMonths--
+        if (tempMonth <= 0) { tempYear--; tempMonth = 12; i = 12; }
+        if (totMonths <= 0) { break }
     }
+    console.log(getMonths)
     const mth = await get_overall_stats_for_this_month({month, year})
 
     // fetching has been completed
