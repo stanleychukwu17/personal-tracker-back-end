@@ -146,9 +146,10 @@ app.get('/get-archieved-goals/', async (req, res) => {
     let getMonths = [], totMonths = 6, tempMonth = Number(month), tempYear = Number(year)
     for (var i = totMonths; i > 0; i--) {
         getMonths.push({'month':tempMonth, 'year':tempYear})
-        tempMonth--
+        tempMonth-- // reduces the tempMonth as we loop through the total months we want to fetch
         if (tempMonth <= 0) { tempYear--; tempMonth = 12; }
     }
+    // fetches each of the last 6 months
     prom2 = getMonths.map(async (h) => {
         const sabiBoy = await get_overall_stats_for_this_month({'month':h.month, 'year':h.year})
         if (sabiBoy.num_return > 0) {
