@@ -80,7 +80,7 @@ const get_overall_stats_for_this_month = async (obj) => {
             ret.scores_arr.push(scores)
             return james
         } else if (row.typ == 'select_time' || row.typ == 'input_hours') {
-            // first select the average
+            // gets the average time for each of the goals in this category
             let [q1] = await dbCon.execute(`SELECT ROUND(AVG(typ_hours), 2) as ag from goals_completed where date_w >= '${date_start}' and date_w <= '${date_end}' and typ_id = ${row.id}`);
             const james = {'title':`Average ${row.title}`, 'typ':row.typ, 'avg':q1[0].ag}
             ret.b.push(james)
