@@ -24,22 +24,21 @@ const calculate_the_stats_for_this_date = async (obj) => {
     const {date_fmt, goals} = obj;
     const subs = {}
 
-    // seperates each of the goals in the object called subs
+    // seperates each of the goals
     goals.forEach(ech => { subs[ech.id] = ech; })
 
     // total time in work (time work ended - time work started)
     let total_work_hours = subs['15'].typ_hours - subs['14'].typ_hours
 
-    // worked more than 15hours, calculates the total work time for the day (time ended work - time started - break_time - distraction_time)
+    // worked more than 15hours, calculates the total work time for the day (time_ended_work - time_started - break_time - distraction_time)
     let total_time_on_sit = subs['15'].typ_hours - subs['14'].typ_hours - subs['16'].typ_hours - subs['17'].typ_hours
     if (total_time_on_sit < 15) {
         subs['2'].typ_val = 'failed'
-        dbCon.execute(`UPDATE goals_stat SET typ_val = 'failed',  where typ_id = 2 limit 1`);
+        dbCon.execute(`UPDATE goals_completed SET typ_val = 'failed' where date_w = '${date_fmt}' and typ_id = 2 limit 1`);
     }
 
-    // difference btw wake time and start time (i.e time lost before worked kicked off)
+    // difference btw wake time and start time (i.e time lost before worked kicked off), and then calculate overall lost hours
     let time_lost_b4_start_work = subs['14'].typ_hours - subs['13'].typ_hours
-
     let time_lost_to_breaks = subs['16'].typ_hours
     let time_lost_to_distraction = subs['17'].typ_hours
     let overall_lost_hours = time_lost_b4_start_work + time_lost_to_breaks + time_lost_to_distraction
