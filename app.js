@@ -105,9 +105,10 @@ const get_overall_stats_for_this_month = async (obj) => {
 //--end--
 
 
-app.get('/', (req, res) => { console.log('first request to the home page'); res.json({'msg':'we good'}) })
+// request to the home page
+app.get('/', (req, res) => { res.json({'msg':'we good'}) })
 
-// fetches all the list of goals to complete for today
+// fetches all the list goals available to the user for completion
 app.get('/get-the-goals/', async (req, res) => {
     const dbCon = await mysql.createConnection(dbObject);
     const [rows, fields] = await dbCon.execute(`SELECT * FROM tracks_list ORDER BY id asc`);
