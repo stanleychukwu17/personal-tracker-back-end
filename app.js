@@ -43,16 +43,14 @@ const calculate_the_stats_for_this_date = async (obj) => {
     let time_lost_to_distraction = subs['17'].typ_hours
     let overall_lost_hours = time_lost_b4_start_work + time_lost_to_breaks + time_lost_to_distraction
 
+    // updates the stats calculated if it already exists in our database or inserts the data into the database
     let [rows] = await dbCon.execute(`SELECT id from goals_stat where date_w = '${date_fmt}' limit 1`);
     if (rows[0]) {
         table_id = rows[0].id;
-        let [result] = await dbCon.execute(`UPDATE goals_stat SET t1='${total_work_hours}', t2='${total_time_on_sit}', t3=${time_lost_b4_start_work},
-            t4='${time_lost_to_breaks}', t5='${time_lost_to_distraction}', t6=${overall_lost_hours}
+        let [result] = await dbCon.execute(`UPDATE goals_stat SET t1='${total_work_hours}', t2='${total_time_on_sit}', t3=${time_lost_b4_start_work}, t4='${time_lost_to_breaks}', t5='${time_lost_to_distraction}', t6=${overall_lost_hours}
             where id = ${table_id} limit 1`);
     } else {
-        let [result] = await dbCon.execute(`INSERT INTO goals_stat (date_w, t1, t2, t3, t4, t5, t6) values
-            ('${date_fmt}', ${total_work_hours}, ${total_time_on_sit}, ${time_lost_b4_start_work},
-            ${time_lost_to_breaks}, ${time_lost_to_distraction}, ${overall_lost_hours})`);
+        let [result] = await dbCon.execute(`INSERT INTO goals_stat (date_w, t1, t2, t3, t4, t5, t6) values ('${date_fmt}', ${total_work_hours}, ${total_time_on_sit}, ${time_lost_b4_start_work}, ${time_lost_to_breaks}, ${time_lost_to_distraction}, ${overall_lost_hours})`);
     }
 
     return {'msg':'okay'}
