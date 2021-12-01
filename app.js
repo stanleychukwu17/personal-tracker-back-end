@@ -88,13 +88,13 @@ const get_overall_stats_for_this_month = async (obj) => {
         }
     })
 
-    // get the average for more stats
+    // get the average for more stats from the 'goals_stat' table
     let [jz] = await dbCon.execute(`SELECT ROUND(AVG(t1), 2) as t1, ROUND(AVG(t2), 2) as t2, ROUND(AVG(t3), 2) as t3, ROUND(AVG(t4), 2) as t4, ROUND(AVG(t5), 2) as t5, ROUND(AVG(t6), 2) as t6
         from goals_stat where date_w >= '${date_start}' and date_w <= '${date_end}'`);
     ret.b.push({'title':`Avg work hours`, 'avg':jz[0].t1});                ret.b.push({'title':`Avg time on sit`, 'avg':jz[0].t2});                    ret.b.push({'title':`Avg time lost b4 start work`, 'avg':jz[0].t3})
     ret.b.push({'title':`Avg time lost to breaks`, 'avg':jz[0].t4});       ret.b.push({'title':`Avg time lost to distraction`, 'avg':jz[0].t5});       ret.b.push({'title':`Avg overall lost hours`, 'avg':jz[0].t6})
 
-    // second, we select the sum of the hours
+    // second, we select the sum of the hours (i.e total hours done for each of the stats)
     let [pa] = await dbCon.execute(`SELECT SUM(t1) as t1, SUM(t2) as t2, SUM(t3) as t3, SUM(t4) as t4, SUM(t5) as t5, SUM(t6) as t6 from goals_stat where date_w >= '${date_start}' and date_w <= '${date_end}'`);
     ret.c.push({'title':`Total worked hours`, 'tot':pa[0].t1});              ret.c.push({'title':`Total time on sit`, 'tot':pa[0].t2});                    ret.c.push({'title':`Total time lost b4 start work`, 'tot':pa[0].t3})
     ret.c.push({'title':`Total time lost to breaks`, 'tot':pa[0].t4});       ret.c.push({'title':`Total time lost to distraction`, 'tot':pa[0].t5});       ret.c.push({'title':`Total overall lost hours`, 'tot':pa[0].t6})
