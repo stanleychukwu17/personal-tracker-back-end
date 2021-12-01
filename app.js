@@ -206,6 +206,6 @@ app.post('/save-this-archive/', async (req, res) => {
         }
     })
 
-    calculate_the_stats_for_this_date({date_fmt, goals})
+    calculate_the_stats_for_this_date({date_fmt, goals}) // calculate the stats the info we just saved
     res.json({'msg':'okay', 'cause':'Moving higher!'})
 })
