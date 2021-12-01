@@ -158,8 +158,9 @@ app.get('/get-archieved-goals/', async (req, res) => {
         return sabiBoy
     })
 
-    // fetching has been completed
+    // fetching has been completed, destructure all of the promises since the promises are wrapped in arrays inside an array i.e [ [promise promise, promise] ]
     Promise.all([promises, ...prom2]).then(re => {
+        // i wanted the last 6 months to show from the most recent month, so i had to sort like below
         Object.keys(mkay).sort().reverse().map(each_key => {diff_month_stats.push(mkay[each_key]) })
         res.json({...ret, diff_month_stats})
     })
