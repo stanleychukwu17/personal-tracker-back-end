@@ -125,19 +125,18 @@ app.get('/get-archieved-goals/', async (req, res) => {
     // formats the whole dates for the month received 2022-01-1, 2022-01-2, 2022-01-3 e.t.c
     for (let i = 31; i >= 1; i--) { date_arr.push({'dfmt':`${year}-${month}-${i}`, 'day':i}) }
 
-    // get the result for every day of the the
+    // get the result for every day of the dates
     const promises = date_arr.map( async ({dfmt, day}) => {
         // get the goals completed
-        let [q1] = await dbCon.execute(`SELECT typ_id, typ, typ_val, typ_hours, (SELECT title from tracks_list where tracks_list.id = goals_completed.typ_id limit 1) as title
-            from goals_completed where date_w = '${dfmt}'`);
+        let [q1] = await dbCon.execute(`SELECT typ_id, typ, typ_val, typ_hours, (SELECT title from tracks_list where tracks_list.id = goals_completed.typ_id limit 1) as title from goals_completed where date_w = '${dfmt}'`);
 
         // get the stats
         let [q2] = await dbCon.execute(`SELECT t1, t2, t3, t4, t5, t6 FROM goals_stat where date_w = '${dfmt}'`);
 
         ret.every_day.push({
             'date':dfmt,
-            'day':dayArr[(new Date(year, month - 1, day)).getDay()],
-            'd_shw':`${monthNames[(new Date(year, month - 1, day)).getMonth()]} ${day}, ${(new Date(year, month-1)).getFullYear()}`,
+            'day':dayArr[(new Date(year, month - 1, day)).getDay()], // the day to show, e.g mon or tur
+            'd_shw':`${monthNames[(new Date(year, month - 1, day)).getMonth()]} ${day}, ${(new Date(year, month-1)).getFullYear()}`, // the month and year
             'goals':q1, 'stats':q2[0]
         })
         return [q1, q2];
