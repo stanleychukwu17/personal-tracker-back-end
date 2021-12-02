@@ -20,21 +20,13 @@ app.use(express.json());
 //--start--- some small helper functions
 const calculate_the_stats_for_this_date = async (obj) => {
     const dbCon = await mysql.createConnection(dbObject);
-    const {date_fmt, goals} = obj;
-    const subs = {}
-
-    // seperates each of the goals
-    goals.forEach(ech => { subs[ech.id] = ech; })
+    const {date_fmt, goals, subs} = obj;
 
     // total time in work (time work ended - time work started)
     let total_work_hours = subs['15'].typ_hours - subs['14'].typ_hours
 
     // worked more than 15hours, calculates the total work time for the day (time_ended_work - time_started - break_time - distraction_time)
     let total_time_on_sit = subs['15'].typ_hours - subs['14'].typ_hours - subs['16'].typ_hours - subs['17'].typ_hours
-    if (total_time_on_sit < 15) {
-        subs['2'].typ_val = 'failed'
-        dbCon.execute(`UPDATE goals_completed SET typ_val = 'failed' where date_w = '${date_fmt}' and typ_id = 2 limit 1`);
-    }
 
     // difference btw wake time and start time (i.e time lost before worked kicked off), and then calculate overall lost hours
     let time_lost_b4_start_work = subs['14'].typ_hours - subs['13'].typ_hours
@@ -52,7 +44,7 @@ const calculate_the_stats_for_this_date = async (obj) => {
         let [result] = await dbCon.execute(`INSERT INTO goals_stat (date_w, t1, t2, t3, t4, t5, t6) values ('${date_fmt}', ${total_work_hours}, ${total_time_on_sit}, ${time_lost_b4_start_work}, ${time_lost_to_breaks}, ${time_lost_to_distraction}, ${overall_lost_hours})`);
     }
 
-    return {'msg':'okay'}
+    return subs
 }
 
 const get_overall_stats_for_this_month = async (obj) => {
@@ -158,7 +150,7 @@ app.get('/get-archieved-goals/', async (req, res) => {
     })
 
     // fetching has been completed, destructure all of the promises since the promises are wrapped in arrays inside an array i.e [ [promise promise, promise] ]
-    Promise.all([promises, ...prom2]).then(re => {
+    Promise.all([...promises, ...prom2]).then(re => {
         // i wanted the last 6 months to show from the most recent month, so i had to sort like below
         Object.keys(mkay).sort().reverse().map(each_key => {diff_month_stats.push(mkay[each_key]) })
         res.json({...ret, diff_month_stats})
@@ -167,22 +159,12 @@ app.get('/get-archieved-goals/', async (req, res) => {
 
 // saves the goals archived for a particular day
 app.post('/save-this-archive/', async (req, res) => {
-    const dbCon = await mysql.createConnection(dbObject);
+    const dbCon = await mysql.createConnection(dbObject), subs = {};
     const {theDay, theMonth, theYear, goals} = req.body;
-    if (theDay < 10) { theDay = `0${theDay}`; }
-    if (theMonth < 10) { theMonth = `0${theMonth}`; }
+    var typ_val = '', hour_val, mins_val, table_id;
 
-    var typ_val = '', typ_hours = 0, hour_val, mins_val, table_id;
-
-    // format the date and get it ready for our mysql database
-    const date_fmt = `${theYear}-${theMonth}-${theDay}`
-
-    goals.forEach( async (ech) => {
-        ech.typ_hours = 0; ech.typ_val = typ_val = '';
-
-        if (ech.typ == 'select_yes' && ech.val && ech.val.length > 0) { ech.typ_val = typ_val = ech.val }
-        else if (ech.typ == 'select_yes' && !ech.val) { ech.typ_val = typ_val = ech.def }
-
+    // calculates the proper hours to store in the database for all the time values
+    goals.map(ech => {
         if (ech.typ == 'select_time' || ech.typ == 'input_hours') {
             hour_val = (ech.hour_val && Number(ech.hour_val)) || 0
             mins_val = (ech.mins_val && Number(ech.mins_val)) || 0
@@ -191,20 +173,40 @@ app.post('/save-this-archive/', async (req, res) => {
                 hour_val = hour_val + mins_val;
             }
 
-            ech.typ_hours = typ_hours = hour_val
+            ech.typ_hours = hour_val
         }
-    
+
+        subs[ech.id] = ech; // seperates each of the goals
+    })
+
+    // format the date and get it ready for our mysql database
+    const date_fmt = `${theYear}-${theMonth}-${theDay}`
+
+    const prom2 = goals.map( async (ech) => {
+        ech.typ_val = '';
+
+        if (ech.typ == 'select_yes' && ech.val && ech.val.length > 0) { ech.typ_val = ech.val; ech.typ_hours = 0; }
+        else if (ech.typ == 'select_yes' && !ech.val) { ech.typ_val = ech.def; ech.typ_hours = 0; }
+
+        // worked more than 15hours or not
+        if (ech.id == 2) {
+            let total_time_on_sit = Number(subs['15'].typ_hours) - Number(subs['14'].typ_hours) - Number(subs['16'].typ_hours) - Number(subs['17'].typ_hours)
+            if (total_time_on_sit < 15) { ech.typ_val = 'failed' }
+        }
+
         let [rows] = await dbCon.execute(`SELECT id from goals_completed where date_w = '${date_fmt}' and typ_id = ${ech.id} limit 1`);
         if (rows[0]) {
             table_id = rows[0].id;
             let [result] = await dbCon.execute(`UPDATE goals_completed SET typ='${ech.typ}', typ_val='${ech.typ_val}', typ_hours=${ech.typ_hours} where id = ${table_id} limit 1`);
+            return result
         } else {
             let [result] = await dbCon.execute(`INSERT INTO goals_completed (date_w, typ_id, typ, typ_val, typ_hours) values ('${date_fmt}', ${ech.id}, '${ech.typ}', '${ech.typ_val}', ${ech.typ_hours})`);
+            return result
             // let {insertId} = result; or let insertId = result.insertId
             // console.log(`INSERT INTO goals_completed (date_w, typ_id, typ, typ_val, typ_hours) values ('${date_fmt}', ${ech.id}, '${ech.typ}', '${ech.typ_val}', ${ech.typ_hours})`)
         }
     })
 
-    calculate_the_stats_for_this_date({date_fmt, goals}) // calculate the stats the info we just saved
-    res.json({'msg':'okay', 'cause':'Moving higher!'})
+    calculate_the_stats_for_this_date({date_fmt, goals, subs}) // calculate the stats the info we just saved
+    Promise.all([prom2]).then(re => {res.json({'msg':'okay', 'cause':'Moving higher!'}) })
 })
