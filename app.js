@@ -12,6 +12,7 @@ const monthNames = ["Jan", "Feb", "March", "April", "May", "June", "July", "Aug"
 const app = express();
 app.listen(4000, () => { console.log('listening on port ', 4000) })
 
+
 // Config of Middlewares
 app.use(cors({origin: '*'}))
 app.use(express.static('/public'));
