@@ -5,9 +5,7 @@ const mysql             = require('mysql2/promise');
 const dbObject = {host:'localhost', user: 'root', password: 'password', database: 'dev_mystats'};
 
 const dayArr = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-const fullMonthNames = [
-    "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"
-];
+const fullMonthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const monthNames = [
     "Jan", "Feb", "March", "April", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec"
 ];
