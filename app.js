@@ -193,7 +193,7 @@ app.post('/save-this-archive/', async (req, res) => {
         // worked more than 15hours or not
         if (ech.id == 2) {
             let total_time_on_sit = Number(subs['15'].typ_hours) - Number(subs['14'].typ_hours) - Number(subs['16'].typ_hours) - Number(subs['17'].typ_hours)
-            if (total_time_on_sit < 16) { ech.typ_val = 'failed' }
+            if (total_time_on_sit < 15) { ech.typ_val = 'failed' }
         }
 
         let [rows] = await dbCon.execute(`SELECT id from goals_completed where date_w = '${date_fmt}' and typ_id = ${ech.id} limit 1`);
