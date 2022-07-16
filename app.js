@@ -2,7 +2,7 @@ require('dotenv').config(); // sets up your dotenv environment
 const express           = require('express');
 const cors              = require('cors');
 const mysql             = require('mysql2/promise');
-const dbObject = {host:'localhost', user: 'root', password: 'password', database: 'dev_mystats'};
+const dbObject = {host:'localhost', user: 'root', password: '', database: 'dev_mystats'};
 
 const dayArr = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 const fullMonthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
