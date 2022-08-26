@@ -111,8 +111,13 @@ app.get('/get-the-goals/', async (req, res) => {
 // fetches the archived goals and the stats for each of those goals
 app.get('/get-archieved-goals/', async (req, res) => {
     const dbCon = await mysql.createConnection(dbObject);
-    let {m:month, y:year} = req.query; month = Number(month);
-    let date_arr = [], prom2 = [], diff_month_stats = [], mkay = {};
+    let {m:month, y:year} = req.query;
+    month = Number(month);
+
+    let date_arr = [],
+        prom2 = [],
+        diff_month_stats = [],
+        mkay = {};
     const ret = {'msg':'okay', 'every_day':[]}
 
     // formats the whole dates for the month received 2022-01-1, 2022-01-2, 2022-01-3 e.t.c
